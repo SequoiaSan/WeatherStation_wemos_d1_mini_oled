@@ -403,7 +403,6 @@ void CheckSleepTime(MillisTimer &mt)
   if(timeClient.getHours() == DND_NIGHT_TIME || timeClient.getHours() <= DND_MORNING_TIME)
   {
     doNotDisturb = true;
-    
   }
   else
   {

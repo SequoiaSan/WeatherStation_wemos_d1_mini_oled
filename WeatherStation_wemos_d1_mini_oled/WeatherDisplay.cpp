@@ -22,8 +22,9 @@ CWeatherDisplay::CWeatherDisplay()
 void CWeatherDisplay::Begin()
 {
   u8g2.begin();
-  u8g2.clearBuffer();
   u8g2.setContrast(255);
+  u8g2.clearBuffer();
+  u8g2.sendBuffer();
 }
 
 void CWeatherDisplay::SetWeatherInfo(const SWeatherInfo& weatherInfo)
@@ -37,7 +38,18 @@ void CWeatherDisplay::SetDoNotDisturb(bool doNotDisturb)
   if(m_doNotDisturb != doNotDisturb)
   {
     m_doNotDisturb = doNotDisturb;
-    m_needDisplayUpdate = true;
+
+    if(m_doNotDisturb)
+    {
+      u8g2.clearBuffer();
+      u8g2.sendBuffer();
+      
+      m_needDisplayUpdate = false;
+    }
+    else
+    {
+      m_needDisplayUpdate = true;
+    }
   }
 }
 
