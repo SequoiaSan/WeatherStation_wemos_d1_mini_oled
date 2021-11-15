@@ -13,25 +13,32 @@
 #include "DebugHelpers.h"
 
 ///////////////// DEFINES
+#define OTA
+#define WIFI_MANAGER
+
 #ifdef DEBUG
 #define CHECK_WEATHER_INTERVAL 1000 * 30
 #define CHECK_SLEEP_TIME_INTERVAL 1000 * 20
 #define CHECK_CONNECTION_TIME_INTERVAL 1000 * 5
 
 #define CHECK_WEATHER_DECREASED_DUE_TO_FAIL_INTERVAL CHECK_WEATHER_INTERVAL
-#else
+#else // DEBUG
 #define CHECK_WEATHER_INTERVAL 1000 * 60 * 30
 #define CHECK_SLEEP_TIME_INTERVAL 1000 * 60 * 10
 #define CHECK_CONNECTION_TIME_INTERVAL 1000 * 60 * 1
 
 #define CHECK_WEATHER_DECREASED_DUE_TO_FAIL_INTERVAL 1000 * 60 * 5
-#endif
+#endif // not DEBUG
 
-#ifndef STASSID
-#define STASSID "ssid_name"
-#define STAPSK "ssid_password"
 #define DEVICE_NAME F("WeatherStation_OLED_1")
-#endif
+
+#ifdef WIFI_MANAGER
+#define AP_WIFI_CONFIG_NAME "WPConfig"
+#define STASSID WiFi.SSID()
+#else // WIFI_MANAGER
+#define STASSID String("ssid_name")
+#define STAPSK "ssid_password"
+#endif // not WIFI_MANAGER
 
 #define WEATHER_REQUEST_URL F("http://api.openweathermap.org/data/2.5/onecall?lat=XX.XXXXXX&lon=XX.XXXXXX&units=metric&exclude=current,minutely,daily,alerts&appid=XXXXXXXXXXXXXXXXXXXXX")
 
@@ -45,19 +52,22 @@
 
 #define WEATHER_CONDITIONS_COUNT_MAX (int8_t)3
 
-#define OTA
 
 ///////////////// GLOBALS
-#ifdef OTA
+#if defined(OTA) || defined(WIFI_MANAGER)
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <AsyncElegantOTA.h>
 
 AsyncWebServer server(80);
-#endif
+#endif // defined(OTA) || defined(WIFI_MANAGER)
 
-const char* ssid     = STASSID;
-const char* password = STAPSK;
+#ifdef OTA
+#include <AsyncElegantOTA.h>
+#endif // OTA
+
+#ifdef WIFI_MANAGER
+#include "src/ESPConnect/ESPConnect.h"
+#endif // WIFI_MANAGER
 
 StaticJsonDocument<18000> jsonResponse; // ~ 20.000
 
@@ -91,7 +101,7 @@ struct SEspTelemetry
   unsigned long totalWeatherRequestsFromFirstStart = 0;
   unsigned long totalWeatherRequestsFailed = 0; 
 } espTelemetry;
-#endif
+#endif // TELEMETRY
 
 static const unsigned int weatherTypeWorstness[] PROGMEM = {
   202, 212, 232, 201, 200, 231, 230, 221, 211, 210,
@@ -103,6 +113,10 @@ static const unsigned int weatherTypeWorstness[] PROGMEM = {
 };
 
 ///////////////// FORWARD DECLARATIONS
+#ifdef WIFI_MANAGER
+void UpdateWiFiStatusAnimationCb();
+#endif // WIFI_MANAGER
+
 void CheckConnection(MillisTimer &mt);
 void CheckWeather(MillisTimer &mt);
 void CheckSleepTime(MillisTimer &mt);
@@ -110,7 +124,7 @@ unsigned int WorstWeatherCase(const Array<unsigned int, WEATHER_CONDITIONS_COUNT
 #ifdef TELEMETRY
 String GetTelemetry();
 void MonitorSerialCommunication();
-#endif
+#endif // TELEMETRY
 
 ///////////////// CODE
 void setup() {
@@ -127,20 +141,46 @@ void setup() {
   DEBUG_LOG_LN();
   DEBUG_LOG_LN();
   DEBUG_LOG(F("Connecting to "));
-  DEBUG_LOG_LN(ssid);
+  DEBUG_LOG_LN(STASSID);
 
   WiFi.hostname(DEVICE_NAME);
+
+  #ifdef WIFI_MANAGER
+  ESPConnect.SetUpdateStatusCb(UpdateWiFiStatusAnimationCb);
+  ESPConnect.autoConnect(AP_WIFI_CONFIG_NAME);
+
+  if(ESPConnect.begin(&server))
+  {
+    DEBUG_LOG_LN("Failed to connect to WiFi");
+    weatherDisplay.DisplayWiFiConfigurationHelpText(AP_WIFI_CONFIG_NAME);
+  }
+  else 
+  {
+    DEBUG_LOG_LN("Connected to WiFi");
+    DEBUG_LOG_LN("IPAddress: "+WiFi.localIP().toString());    
+    weatherDisplay.UpdateWiFiConnectedState(STASSID.c_str(), WiFi.localIP().toString());
+  }  
+  #else // WIFI_MANAGER
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(STASSID, STAPSK);
 
   weatherDisplay.ResetAnimationFrames();
   while (WiFi.status() != WL_CONNECTED) {
-    weatherDisplay.UpdateWiFiAnimation(ssid);
+    weatherDisplay.UpdateWiFiAnimation(STASSID.c_str());
     delay(500);
     DEBUG_LOG(F("."));
   }
-  weatherDisplay.UpdateWiFiConnectedState(ssid, WiFi.localIP().toString());
+  weatherDisplay.UpdateWiFiConnectedState(STASSID.c_str(), WiFi.localIP().toString());
+  #endif // not WIFI_MANAGER
+  
   weatherDisplay.EnableOLEDProtection(true);
+
+// How long we'll display obtained IP adress
+#ifdef DEBUG
+  delay(1000);
+#else // DEBUG
+  delay(10000);
+#endif // not DEBUG
 
 #ifdef OTA
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -151,7 +191,7 @@ void setup() {
   server.on("/telemetry", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, F("text/plain"), GetTelemetry().c_str());
   });
-#endif
+#endif // TELEMETRY
 
   AsyncElegantOTA.begin(&server);
   server.begin();
@@ -166,9 +206,9 @@ void setup() {
   DEBUG_LOG_LN(F("Initialization end"));
 
 #ifdef TELEMETRY
-  espTelemetry.wiFiConnectedTo  = ssid;
+  espTelemetry.wiFiConnectedTo  = STASSID;
   espTelemetry.ipAdressObtained = WiFi.localIP();
-#endif
+#endif // TELEMETRY
 
   connectionCheckTimer.setInterval(CHECK_CONNECTION_TIME_INTERVAL);
   connectionCheckTimer.expiredHandler(CheckConnection);
@@ -196,7 +236,7 @@ void loop()
 {
 #ifdef OTA
   AsyncElegantOTA.loop();
-#endif
+#endif // OTA
   
   timeClient.update();
 
@@ -208,8 +248,15 @@ void loop()
 
 #ifdef TELEMETRY
   MonitorSerialCommunication();
-#endif
+#endif // TELEMETRY
 }
+
+#ifdef WIFI_MANAGER
+void UpdateWiFiStatusAnimationCb()
+{
+  weatherDisplay.UpdateWiFiAnimation(STASSID.c_str());
+}
+#endif // WIFI_MANAGER
 
 void CheckConnection(MillisTimer &mt)
 {
@@ -228,7 +275,7 @@ void CheckWeather(MillisTimer &mt)
 {
 #ifdef TELEMETRY
   ++espTelemetry.totalWeatherRequestsFromFirstStart;
-#endif
+#endif // TELEMETRY
 
   DEBUG_LOG(F("Prepare request send Free heap: "));
   DEBUG_LOG_LN(ESP.getFreeHeap());
@@ -259,7 +306,7 @@ void CheckWeather(MillisTimer &mt)
 
 #ifdef TELEMETRY
       ++espTelemetry.totalWeatherRequestsFailed;
-#endif
+#endif // TELEMETRY
 
       weatherCheckTimer.setInterval(CHECK_WEATHER_DECREASED_DUE_TO_FAIL_INTERVAL);
       weatherCheckTimer.reset();

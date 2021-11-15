@@ -128,6 +128,16 @@ void CWeatherDisplay::UpdateWiFiConnectedState(const char* ssidName, const Strin
   u8g2.sendBuffer();
 }
 
+void CWeatherDisplay::DisplayWiFiConfigurationHelpText(const char* ssidName)
+{
+  const unsigned short offsetY = 20;
+  u8g2.clearBuffer();
+  u8g2.setDrawColor(1);
+  u8g2.setFont(u8g2_font_5x7_tr);
+  u8g2.drawStr(0, offsetY + WIFI_ICON_H / 2, ssidName);
+  u8g2.sendBuffer();
+}
+
 void CWeatherDisplay::InternalUpdateWeatherDisplay()
 {
   if(m_needDisplayUpdate)

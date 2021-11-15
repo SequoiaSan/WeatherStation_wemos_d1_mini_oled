@@ -99,6 +99,8 @@ class CWeatherDisplay
     void ResetAnimationFrames();
     void UpdateWiFiAnimation(const char* ssidName);
     void UpdateWiFiConnectedState(const char* ssidName, const String& ipAdress);
+
+    void DisplayWiFiConfigurationHelpText(const char* ssidName);
     
   private:
     void InternalUpdateWeatherDisplay();
