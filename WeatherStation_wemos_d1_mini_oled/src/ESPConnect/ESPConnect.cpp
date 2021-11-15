@@ -213,10 +213,11 @@ bool ESPConnectClass::begin(AsyncWebServer* server, unsigned long timeout){
     unsigned long lastMillis = millis();
     while(WiFi.status() != WL_CONNECTED && (unsigned long)(millis() - lastMillis) < timeout){
       
-      if(_wifiStatusCb)
+      if(_wifiStatusUpdateCb)
       {
-        _wifiStatusCb();
+        _wifiStatusUpdateCb();
       }
+      
       Serial.print("#");
       delay(500);
       yield();
@@ -230,6 +231,10 @@ bool ESPConnectClass::begin(AsyncWebServer* server, unsigned long timeout){
 
   // Start Captive Portal if not connected to STA
   if(WiFi.status() != WL_CONNECTED){
+    if(_wifiStatusFailCb)
+    {
+      _wifiStatusFailCb();
+    }
     // Start captive portal
     return start_portal();
   }else{

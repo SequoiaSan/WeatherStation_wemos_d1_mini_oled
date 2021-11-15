@@ -69,7 +69,7 @@ AsyncWebServer server(80);
 #include "src/ESPConnect/ESPConnect.h"
 #endif // WIFI_MANAGER
 
-StaticJsonDocument<18000> jsonResponse; // ~ 20.000
+StaticJsonDocument<25000> jsonResponse; // ~ 20.000
 
 CWeatherDisplay weatherDisplay;
 
@@ -115,6 +115,7 @@ static const unsigned int weatherTypeWorstness[] PROGMEM = {
 ///////////////// FORWARD DECLARATIONS
 #ifdef WIFI_MANAGER
 void UpdateWiFiStatusAnimationCb();
+void WiFiStatusFailCb();
 #endif // WIFI_MANAGER
 
 void CheckConnection(MillisTimer &mt);
@@ -146,7 +147,9 @@ void setup() {
   WiFi.hostname(DEVICE_NAME);
 
   #ifdef WIFI_MANAGER
-  ESPConnect.SetUpdateStatusCb(UpdateWiFiStatusAnimationCb);
+  ESPConnect.SetWiFiStatusUpdateCb(UpdateWiFiStatusAnimationCb);
+  ESPConnect.SetWifiStatusFailCb(WiFiStatusFailCb);
+  
   ESPConnect.autoConnect(AP_WIFI_CONFIG_NAME);
 
   if(ESPConnect.begin(&server))
@@ -255,6 +258,11 @@ void loop()
 void UpdateWiFiStatusAnimationCb()
 {
   weatherDisplay.UpdateWiFiAnimation(STASSID.c_str());
+}
+
+void WiFiStatusFailCb()
+{
+  weatherDisplay.DisplayWiFiConfigurationHelpText(AP_WIFI_CONFIG_NAME);
 }
 #endif // WIFI_MANAGER
 

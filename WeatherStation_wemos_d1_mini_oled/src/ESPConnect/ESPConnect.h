@@ -37,10 +37,10 @@
 
 
 class ESPConnectClass {
-  public:
-    typedef void(*wifiStatusCb)(void);
 
   private:
+    typedef void(*wifiStatusCb)(void);
+
     DNSServer* _dns = nullptr;
     AsyncWebServer* _server = nullptr;
 
@@ -51,7 +51,8 @@ class ESPConnectClass {
     String _sta_ssid = "";
     String _sta_password = "";
 
-    wifiStatusCb _wifiStatusCb;
+    wifiStatusCb _wifiStatusUpdateCb;
+    wifiStatusCb _wifiStatusFailCb;
 
   private:
     void load_sta_credentials();
@@ -73,7 +74,8 @@ class ESPConnectClass {
     /*
       Setters
     */
-    void SetUpdateStatusCb(wifiStatusCb callback) { _wifiStatusCb = callback; };
+    void SetWiFiStatusUpdateCb(wifiStatusCb callback) { _wifiStatusUpdateCb = callback; };
+    void SetWifiStatusFailCb(wifiStatusCb callback) { _wifiStatusFailCb = callback; };
 
     /*
       Data Getters
