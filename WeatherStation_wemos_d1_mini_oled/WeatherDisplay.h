@@ -1,3 +1,6 @@
+#ifndef _WEATHERDISPLAY_H
+#define _WEATHERDISPLAY_H
+
 #include <Arduino.h>
 #include <Array.h>
 #include <U8g2lib.h>
@@ -131,3 +134,4 @@ class CWeatherDisplay
 
     unsigned short m_currentAnimationFrame;
 };
+#endif

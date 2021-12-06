@@ -58,7 +58,7 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-AsyncWebServer server(80);
+AsyncWebServer webServer(80);
 #endif // defined(OTA) || defined(WIFI_MANAGER)
 
 #ifdef OTA
@@ -69,7 +69,7 @@ AsyncWebServer server(80);
 #include "src/ESPConnect/ESPConnect.h"
 #endif // WIFI_MANAGER
 
-StaticJsonDocument<25000> jsonResponse; // ~ 20.000
+StaticJsonDocument<25000> jsonResponse;
 
 CWeatherDisplay weatherDisplay;
 
@@ -152,7 +152,7 @@ void setup() {
   
   ESPConnect.autoConnect(AP_WIFI_CONFIG_NAME);
 
-  if(ESPConnect.begin(&server))
+  if(ESPConnect.begin(&webServer))
   {
     DEBUG_LOG_LN("Failed to connect to WiFi");
     weatherDisplay.DisplayWiFiConfigurationHelpText(AP_WIFI_CONFIG_NAME);
@@ -186,18 +186,18 @@ void setup() {
 #endif // not DEBUG
 
 #ifdef OTA
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, F("text/plain"), DEVICE_NAME);
   });
 
 #ifdef TELEMETRY
-  server.on("/telemetry", HTTP_GET, [](AsyncWebServerRequest *request) {
+  webServer.on("/telemetry", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, F("text/plain"), GetTelemetry().c_str());
   });
 #endif // TELEMETRY
 
-  AsyncElegantOTA.begin(&server);
-  server.begin();
+  AsyncElegantOTA.begin(&webServer);
+  webServer.begin();
   DEBUG_LOG_LN(F("HTTP server started"));
 #endif // OTA
 
