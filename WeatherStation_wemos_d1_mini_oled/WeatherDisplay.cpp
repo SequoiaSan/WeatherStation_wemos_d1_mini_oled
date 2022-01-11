@@ -7,6 +7,7 @@ CWeatherDisplay::CWeatherDisplay()
   , m_doNotDisturb(false)
   , m_isDay(true)
   , m_errorMark(false)
+  , m_celsiusSign(false)
   , m_noWifiConnectionMark(false)
   , m_currentAnimationFrame(0)
   , m_needDisplayUpdate(false)
@@ -74,11 +75,23 @@ void CWeatherDisplay::SetNoWifiConnectionMark(bool noWifi)
   m_needDisplayUpdate = true;  
 }
 
+void CWeatherDisplay::SetCelsiusSign(bool celsiusSign)
+{
+  m_celsiusSign = celsiusSign;
+}
+
 void CWeatherDisplay::EnableOLEDProtection(bool enable, unsigned int updateTime/* = WEATHER_DISPLAY_OLED_START_REFRESH*/)
 {
   m_oledProtectionEnabled = enable;
   m_oledStartRefreshTimer.setInterval(updateTime);
-  m_oledStartRefreshTimer.start();
+  if(enable)
+  {
+    m_oledStartRefreshTimer.start();
+  }
+  else
+  {
+    m_oledStartRefreshTimer.stop();
+  }
 }
 
 void CWeatherDisplay::UpdateDisplay()
@@ -515,13 +528,14 @@ void CWeatherDisplay::PrepareTemperatureForDisplay(const short currentTemp, cons
   
   DisplayTemperatureAlligment(currentTemp);
 
-#ifdef DISPLAY_CELSIUS
-  // Display Celsius sign
-  u8g2.setFont(u8g2_font_helvR12_tf);
-  
-  u8g2.setCursor(currenttemperatureCursorOffsetX + 58,currentTemperatureCursorOffsetY - 23);
-  u8g2.print("\xb0");
-#endif 
+  if(m_celsiusSign)
+  {
+    // Display Celsius sign
+    u8g2.setFont(u8g2_font_helvR12_tf);
+    
+    u8g2.setCursor(currenttemperatureCursorOffsetX + 58,currentTemperatureCursorOffsetY - 23);
+    u8g2.print("\xb0");
+  }
 
   u8g2.setFont(u8g2_font_fub14_tn);
   u8g2.setCursor(eveningTemperatureCursorOffsetX,currentTemperatureCursorOffsetY + eveningTemperatureCursorOffsetY);

@@ -19,8 +19,6 @@
 #endif
 
 ///////////////// DEFINES
-#define DISPLAY_CELSIUS 1
-
 #ifdef DEBUG
 #define WEATHER_DISPLAY_OLED_START_REFRESH 1000 * 30
 #define WEATHER_DISPLAY_OLED_END_REFRESH 1000 * 2
@@ -94,6 +92,7 @@ class CWeatherDisplay
     void SetIsDay(bool isDay);
     void SetErrorMark(bool error);
     void SetNoWifiConnectionMark(bool noWifi);
+    void SetCelsiusSign(bool celsiusSign);
 
     void EnableOLEDProtection(bool enable, unsigned int updateTime = WEATHER_DISPLAY_OLED_START_REFRESH);
 
@@ -124,6 +123,7 @@ class CWeatherDisplay
     bool m_doNotDisturb;
     bool m_isDay;
     bool m_errorMark;
+    bool m_celsiusSign;
     bool m_noWifiConnectionMark;
     bool m_needDisplayUpdate;
     bool m_oledProtectionEnabled;
