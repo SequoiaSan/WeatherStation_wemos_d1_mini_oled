@@ -10,7 +10,6 @@
 #include <MillisTimer.h>
 
 #include <FS.h>
-//#include <Ethernet.h>
 #include "ConfigHTMLPage.h"
 
 #include "WeatherDisplay.h"
@@ -44,13 +43,7 @@
 #define STAPSK "ssid_password"
 #endif // not WIFI_MANAGER
 
-//#define WEATHER_REQUEST_URL F("http://api.openweathermap.org/data/2.5/onecall?lat=%f&lon=%f&units=%s&exclude=current,minutely,daily,alerts&appid=%s")
-//WEATHER_REQUEST_URL F("http://api.openweathermap.org/data/2.5/onecall?lat=50.49852618&lon=30.51518790&units=metric&exclude=current,minutely,daily,alerts&appid=cb788ffb080381bb25c79446b1b0da94_XXXX")
 const char* weatherRequestURL = "http://api.openweathermap.org/data/2.5/onecall?lat=%f&lon=%f&units=%s&exclude=current,minutely,daily,alerts&appid=%s";
-
-
-#define DND_NIGHT_TIME 23
-#define DND_MORNING_TIME 8
 
 #define EVENING_TIME 18
 #define MORNING_TIME 7
@@ -58,7 +51,6 @@ const char* weatherRequestURL = "http://api.openweathermap.org/data/2.5/onecall?
 #define PROBABILITY_OF_PERCEPTION_MAX_COUNT 16
 
 #define WEATHER_CONDITIONS_COUNT_MAX (int8_t)3
-
 
 ///////////////// GLOBALS
 #if defined(OTA) || defined(WIFI_MANAGER)
@@ -139,15 +131,26 @@ void MonitorSerialCommunication();
 ///////////////// CODE
 
 void notFound(AsyncWebServerRequest *request) {
-  request->send(404, "text/plain", "Not found");
+  request->send(404, "text/plain", F("Not found"));
+}
+
+void ApplyConfigurataion()
+{
+    // Will apply after restart. Do you wish to restart?
+    WiFi.hostname(deviceConfiguration[0][PARAM_WIFINAME].as<String>());
+    weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>());
+    CheckSleepTime(sleepTimeCheckTimer);
+    weatherDisplay.SetCelsiusSign(deviceConfiguration[0][PARAM_CELSIUSSIGN].as<bool>() && deviceConfiguration[0][PARAM_CELSIUS].as<bool>());
+    CheckWeather(weatherCheckTimer); 
 }
 
 void ReadConfigurationFile()
 {
+  DEBUG_LOG_LN(F("ReadConfigurationFile()"));
   if(!configurationUpdated)
   {
     configurationUpdated = false;
-
+    DEBUG_LOG_LN(F("Open configuration file"));
     File configuration = SPIFFS.open("/configuration.json", "r");
     if(configuration && configuration.size()) 
     {
@@ -159,6 +162,7 @@ void ReadConfigurationFile()
         DEBUG_LOG_LN(err.c_str());
       }
 
+      DEBUG_LOG_LN("Read configuration file successfully.");
       configuration.close();
     }
     else
@@ -274,8 +278,8 @@ void setup()
     String jsonData;
     JsonObject obj = deviceConfiguration.createNestedObject();
     obj[PARAM_WIFINAME] = DEVICE_NAME;
-    obj[PARAM_LAT] = 50.49852618f;
-    obj[PARAM_LON] = 30.51518790f;
+    obj[PARAM_LAT] = 0;
+    obj[PARAM_LON] = 0;
     obj[PARAM_SCREENSAVER] = true;
     obj[PARAM_SCREENSAVERTIME] = WEATHER_DISPLAY_OLED_START_REFRESH;
     obj[PARAM_DNDMODE] = true;
@@ -283,22 +287,21 @@ void setup()
     obj[PARAM_DNDTO] = 7;
     obj[PARAM_CELSIUS] = true;
     obj[PARAM_CELSIUSSIGN] = true;
-    obj[PARAM_APIKEY] = "cb788ffb080381bb25c79446b1b0da94";
+    obj[PARAM_APIKEY] = "XXXXXXXXXXXXXXXXXXXXXXXXXX";
     serializeJson(deviceConfiguration, jsonData);
   
     DEBUG_LOG_LN(jsonData.c_str());
     
-    int bytesWritten = configuration.print(jsonData.c_str());
-     
+    const int bytesWritten = configuration.print(jsonData.c_str());
     if (bytesWritten > 0) 
     {
       configurationUpdated = true;
-      DEBUG_LOG_LN("File was written");
+      DEBUG_LOG(F("File was written "));
       DEBUG_LOG_LN(bytesWritten);
      
     } else 
     {
-        DEBUG_LOG_LN("File write failed");
+        DEBUG_LOG_LN(F("File write failed"));
     }
     
     configuration.close();
@@ -350,11 +353,6 @@ void setup()
   #endif // not WIFI_MANAGER
   
   weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>());
-  //weatherDisplay.EnableOLEDProtection(true);
-  //DEBUG_LOG();
-  //DEBUG_LOG();
-  //DEBUG_LOG_LN();
-  //DEBUG_LOG();
   weatherDisplay.SetCelsiusSign(deviceConfiguration[0][PARAM_CELSIUSSIGN].as<bool>() && deviceConfiguration[0][PARAM_CELSIUS].as<bool>());
 
 // How long we'll display obtained IP adress
@@ -369,7 +367,27 @@ void setup()
 #ifdef OTA
   webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", config_html_page, processor);
-  });;
+  });
+
+  webServer.on("/restartdevice", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", "Restarting...");
+    ESP.restart();
+    // Reload page after 15 seconds? Progress Bar?
+  });
+
+  webServer.on("/resetdevice", HTTP_GET, [](AsyncWebServerRequest *request){
+    String operationResult = F("Failed. Configuration wasn't wiped out. Restarting.");
+    if(SPIFFS.remove(F("/configuration.json")))
+    {
+      operationResult = F("Success. Device cleared. Restarting.");
+    }
+    request->send_P(200, "text/html", operationResult.c_str());
+    //ESPConnect.erase();
+    WiFi.disconnect(true);
+    ESP.eraseConfig();
+    ESP.restart();
+    // Progress Bar?
+  });
 
 #ifdef TELEMETRY
   webServer.on("/telemetry", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -377,175 +395,145 @@ void setup()
   });
 #endif // TELEMETRY
 
-  // webServer.on("/config", HTTP_POST, [](AsyncWebServerRequest *request) {
-  //   File configuration = SPIFFS.open("/configuration.json", "r");
-  //   if(configuration && configuration.size()) 
-  //   {
-  //     //DynamicJsonDocument configurationjson(1000);
-  //     JsonArray jsonArray = deviceConfiguration.to<JsonArray>();
-  //     DeserializationError err = deserializeJson(deviceConfiguration, configuration);
-  //     DEBUG_LOG_LN(deviceConfiguration[0]["inputString"].as<String>());
-  //     DEBUG_LOG_LN(configuration);
-  //     DEBUG_LOG_LN(err.c_str());
-  //     if (err) {
-  //       DEBUG_LOG(F("deserializeJson() failed with code "));
-  //       DEBUG_LOG_LN(err.c_str());
-  //     }
-  //     else
-  //     {
-  //       String serializedJson;
-  //       serializeJson(jsonArray, serializedJson);
-  //       DEBUG_LOG_LN(serializedJson);
-  //       //request->send(200, F("application/json"), configuration.read());
-  //       while(configuration.available())
-  //       {
-  //         DEBUG_LOG_LN(configuration.read());
-  //       }
-  //     }
-
-  //     configuration.close();
-  //   }
-  //   else
-  //   {
-  //     DEBUG_LOG_LN("Failed to read file.");
-  //   }
-  // });
-
-
   webServer.on("/saveconfig", HTTP_GET, [] (AsyncWebServerRequest *request) {
     String operationResult;
     if(SPIFFS.exists(F("/configuration.json")))
     {
-      //if(SPIFFS.remove(F("/configuration.json")))
-      {
-        File configuration = SPIFFS.open(F("/configuration.json"), "w");
-  
-        // CHECK DATA BEFORE SAVE!!!!
+      File configuration = SPIFFS.open(F("/configuration.json"), "w");
 
-        // Check received coordinates
-        float newLat = deviceConfiguration[0][PARAM_LAT].as<float>();
-        float newLon = deviceConfiguration[0][PARAM_LON].as<float>();
-        
-        DEBUG_LOG(F("Previous Coordinates: "));
-        DEBUG_LOG(newLat);
-        DEBUG_LOG(F(", "));
-        DEBUG_LOG_LN(newLon);
-        
-        if(request->hasParam(PARAM_COORDINATES))
-        {
-          const String paramValue = request->getParam(PARAM_COORDINATES)->value();
-          
-          DEBUG_LOG(F("Received new coordinates: "));
-          DEBUG_LOG_LN(paramValue);
-          
-          float latTemp = 0;
-          float lonTemp = 0;
-          const int delimiterPos = paramValue.indexOf(",");
-          
-          DEBUG_LOG(F("Delimiter position: "));
-          DEBUG_LOG_LN(delimiterPos);
-          
-          if(delimiterPos >= 0)
-          {
-
-            String latStr = paramValue.substring(0, delimiterPos);
-            latStr.trim();
-            latTemp = latStr.toFloat();
-
-            String lonStr = paramValue.substring(delimiterPos + 1, paramValue.length());
-            lonStr.trim();
-            lonTemp = lonStr.toFloat();
-
-            DEBUG_LOG(F("Transformed Coordinates: "));
-            DEBUG_LOG(latTemp);
-            DEBUG_LOG(F(", "));
-            DEBUG_LOG_LN(lonTemp);
-
-            if(latTemp > 0.f && lonTemp > 0.f)
-            {
-              newLat = latTemp;
-              newLon = lonTemp;
-            }
-            
-            DEBUG_LOG(F("New Coordinates: "));
-            DEBUG_LOG(newLat);
-            DEBUG_LOG(F(", "));
-            DEBUG_LOG_LN(newLon);
-          }
-        }
-
-        // Check Display off timer
-        int newScreenSaverTime = request->hasParam(PARAM_SCREENSAVERTIME) ? request->getParam(PARAM_SCREENSAVERTIME)->value().toInt() <= 0 ? deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>() : request->getParam(PARAM_SCREENSAVERTIME)->value().toInt() : deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>();
-
-        // Check DND time
-        int newDNDTimeFrom = deviceConfiguration[0][PARAM_DNDFROM].as<int>();
-        int newDNDTimeTo = deviceConfiguration[0][PARAM_DNDTO].as<int>();
-         
-        if(request->hasParam(PARAM_DNDFROM))
-        {
-          const int receivedDNDTimeFrom = request->getParam(PARAM_DNDFROM)->value().toInt();
-          if(receivedDNDTimeFrom > 0 && receivedDNDTimeFrom <= 24)
-          {
-            newDNDTimeFrom = receivedDNDTimeFrom;
-          }
-          else if(newDNDTimeTo == newDNDTimeFrom)
-          {
-            newDNDTimeFrom = --newDNDTimeFrom < 1 ? 24 : newDNDTimeFrom;
-          }
-        }
-
-        if(request->hasParam(PARAM_DNDTO))
-        {
-          const int receivedDNDTimeTo = request->getParam(PARAM_DNDTO)->value().toInt();
-          if(receivedDNDTimeTo > 0 && receivedDNDTimeTo <= 24 && newDNDTimeFrom != receivedDNDTimeTo)
-          {
-            newDNDTimeTo = receivedDNDTimeTo;
-          }
-          else if(newDNDTimeTo == newDNDTimeFrom)
-          {
-            newDNDTimeTo = ++newDNDTimeTo > 24 ? 1 : newDNDTimeTo;
-          }
-        }
-        
-        String jsonData;
-        deviceConfiguration.clear();
-        JsonObject obj = deviceConfiguration.createNestedObject();
-        obj[PARAM_WIFINAME] = request->hasParam(PARAM_WIFINAME) ? request->getParam(PARAM_WIFINAME)->value() : deviceConfiguration[0][PARAM_WIFINAME].as<String>();
-
-        obj[PARAM_LAT] = newLat;
-        obj[PARAM_LON] = newLon;
-        
-        obj[PARAM_SCREENSAVER] = request->hasParam(PARAM_SCREENSAVER) ? true : false;
-        obj[PARAM_SCREENSAVERTIME] = newScreenSaverTime;
-        obj[PARAM_DNDMODE] = request->hasParam(PARAM_DNDMODE) ? true : false;
-        obj[PARAM_DNDFROM] = newDNDTimeFrom;
-        obj[PARAM_DNDTO] = newDNDTimeTo;
-        obj[PARAM_CELSIUS] = request->hasParam(PARAM_CELSIUS) ? true : false;
-        obj[PARAM_CELSIUSSIGN] = request->hasParam(PARAM_CELSIUSSIGN) ? true : false;
-        obj[PARAM_APIKEY] = request->hasParam(PARAM_APIKEY) ? request->getParam(PARAM_APIKEY)->value() : deviceConfiguration[0][PARAM_APIKEY].as<String>();
-        serializeJson(deviceConfiguration, jsonData);
+      //
+      // CHECK DATA BEFORE SAVE!!!!
+      //
+      // Check received coordinates
+      float newLat = deviceConfiguration[0][PARAM_LAT].as<float>();
+      float newLon = deviceConfiguration[0][PARAM_LON].as<float>();
       
-        DEBUG_LOG_LN(jsonData.c_str());
+      DEBUG_LOG(F("Previous Coordinates: "));
+      DEBUG_LOG(newLat);
+      DEBUG_LOG(F(", "));
+      DEBUG_LOG_LN(newLon);
+      
+      if(request->hasParam(PARAM_COORDINATES))
+      {
+        const String paramValue = request->getParam(PARAM_COORDINATES)->value();
         
-        int bytesWritten = configuration.print(jsonData.c_str());
+        DEBUG_LOG(F("Received new coordinates: "));
+        DEBUG_LOG_LN(paramValue);
         
-        if (bytesWritten > 0) 
+        float latTemp = 0;
+        float lonTemp = 0;
+        const int delimiterPos = paramValue.indexOf(",");
+        
+        DEBUG_LOG(F("Delimiter position: "));
+        DEBUG_LOG_LN(delimiterPos);
+        
+        if(delimiterPos >= 0)
         {
-          configurationUpdated = true;
-          DEBUG_LOG_LN("File was written");
-          DEBUG_LOG_LN(bytesWritten);
-          operationResult = F("Success");
-          configurationUpdated = true;
-        } else 
-        {
-            DEBUG_LOG_LN("File write failed");
-            operationResult = F("Failed");
+
+          String latStr = paramValue.substring(0, delimiterPos);
+          latStr.trim();
+          latTemp = latStr.toFloat();
+
+          String lonStr = paramValue.substring(delimiterPos + 1, paramValue.length());
+          lonStr.trim();
+          lonTemp = lonStr.toFloat();
+
+          DEBUG_LOG(F("Transformed Coordinates: "));
+          DEBUG_LOG(latTemp);
+          DEBUG_LOG(F(", "));
+          DEBUG_LOG_LN(lonTemp);
+
+          if(latTemp > 0.f && lonTemp > 0.f)
+          {
+            newLat = latTemp;
+            newLon = lonTemp;
+          }
+          
+          DEBUG_LOG(F("New Coordinates: "));
+          DEBUG_LOG(newLat);
+          DEBUG_LOG(F(", "));
+          DEBUG_LOG_LN(newLon);
         }
-        
-        configuration.close();
       }
+
+      // Check Display off timer
+      int newScreenSaverTime = deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>();
+      if(request->hasParam(PARAM_SCREENSAVERTIME) && request->getParam(PARAM_SCREENSAVERTIME)->value().toInt() > 0)
+      {
+        newScreenSaverTime = request->getParam(PARAM_SCREENSAVERTIME)->value().toInt();
+      }
+
+      // Check DND time
+      int newDNDTimeFrom = deviceConfiguration[0][PARAM_DNDFROM].as<int>();
+      int newDNDTimeTo = deviceConfiguration[0][PARAM_DNDTO].as<int>();
+       
+      if(request->hasParam(PARAM_DNDFROM))
+      {
+        const int receivedDNDTimeFrom = request->getParam(PARAM_DNDFROM)->value().toInt();
+        if(receivedDNDTimeFrom > 0 && receivedDNDTimeFrom <= 24)
+        {
+          newDNDTimeFrom = receivedDNDTimeFrom;
+        }
+        else if(newDNDTimeTo == newDNDTimeFrom)
+        {
+          newDNDTimeFrom = --newDNDTimeFrom < 1 ? 24 : newDNDTimeFrom;
+        }
+      }
+
+      if(request->hasParam(PARAM_DNDTO))
+      {
+        const int receivedDNDTimeTo = request->getParam(PARAM_DNDTO)->value().toInt();
+        if(receivedDNDTimeTo > 0 && receivedDNDTimeTo <= 24 && newDNDTimeFrom != receivedDNDTimeTo)
+        {
+          newDNDTimeTo = receivedDNDTimeTo;
+        }
+        else if(newDNDTimeTo == newDNDTimeFrom)
+        {
+          newDNDTimeTo = ++newDNDTimeTo > 24 ? 1 : newDNDTimeTo;
+        }
+      }
+      
+      String jsonData;
+      deviceConfiguration.clear();
+      JsonObject obj = deviceConfiguration.createNestedObject();
+      obj[PARAM_WIFINAME] = request->hasParam(PARAM_WIFINAME) ? request->getParam(PARAM_WIFINAME)->value() : deviceConfiguration[0][PARAM_WIFINAME].as<String>();
+      obj[PARAM_LAT] = newLat;
+      obj[PARAM_LON] = newLon;
+      obj[PARAM_SCREENSAVER] = request->hasParam(PARAM_SCREENSAVER) ? true : false;
+      obj[PARAM_SCREENSAVERTIME] = newScreenSaverTime;
+      obj[PARAM_DNDMODE] = request->hasParam(PARAM_DNDMODE) ? true : false;
+      obj[PARAM_DNDFROM] = newDNDTimeFrom;
+      obj[PARAM_DNDTO] = newDNDTimeTo;
+      obj[PARAM_CELSIUS] = request->hasParam(PARAM_CELSIUS) ? true : false;
+      obj[PARAM_CELSIUSSIGN] = request->hasParam(PARAM_CELSIUSSIGN) ? true : false;
+      obj[PARAM_APIKEY] = request->hasParam(PARAM_APIKEY) ? request->getParam(PARAM_APIKEY)->value() : deviceConfiguration[0][PARAM_APIKEY].as<String>();
+      serializeJson(deviceConfiguration, jsonData);
+    
+      DEBUG_LOG_LN(jsonData.c_str());
+      
+      const int bytesWritten = configuration.print(jsonData.c_str());
+      if (bytesWritten > 0) 
+      {
+        configurationUpdated = true;
+        DEBUG_LOG_LN(F("File was written"));
+        DEBUG_LOG_LN(bytesWritten);
+        operationResult = F("Success");
+        configurationUpdated = true;
+      } else 
+      {
+          DEBUG_LOG_LN(F("File write failed"));
+          operationResult = F("Failed");
+      }
+
+      if(configurationUpdated)
+      {
+        ApplyConfigurataion();
+      }
+      
+      configuration.close();
     }
 
+    DEBUG_LOG(F("Configuration saved: "));
     DEBUG_LOG_LN(operationResult);
     request->send(200, "text/text", operationResult);
   });
@@ -653,13 +641,11 @@ void CheckWeather(MillisTimer &mt)
   const char* metric = deviceConfiguration[0][PARAM_CELSIUS].as<bool>() ? "metric" : "imperial";
   const String apiKey = deviceConfiguration[0][PARAM_APIKEY].as<String>();
 
-  char buffer[200];
+  char requestBuffer[200];
+  sprintf(requestBuffer, weatherRequestURL, lat, lon, metric, apiKey.c_str());
 
-  //const String request = format(weatherRequestURL, lat, lon, metric, apiKey.c_str());
-  sprintf(buffer, weatherRequestURL, lat, lon, metric, apiKey.c_str());
-
-  http.begin(client, buffer);
-  DEBUG_LOG_LN(buffer);
+  http.begin(client, requestBuffer);
+  DEBUG_LOG_LN(requestBuffer);
   int httpResponseCode = http.GET();
 
   if (httpResponseCode == t_http_codes::HTTP_CODE_OK) 

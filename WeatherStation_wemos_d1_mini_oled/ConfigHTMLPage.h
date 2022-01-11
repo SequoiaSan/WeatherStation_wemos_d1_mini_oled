@@ -24,7 +24,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
             function submitMessage() 
             {
-                //alert("Saved value to ESP SPIFFS");
+                //alert("All data ");
                 //document.location.reload(false);
                 //setTimeout(function(){ document.location.reload(false); }, 500);   
             }
@@ -48,9 +48,31 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                 document.getElementById("iframemap").src = url;
                 document.getElementById("maplink").href = url;
             }
+
+            //function reqListener () 
+            //{
+            //  console.log(this.responseText);
+            //}
+
+            function RestartDevice()
+            {
+              var oReq = new XMLHttpRequest();
+              //oReq.addEventListener("restartdevice", reqListener);
+              oReq.open("GET", "/restartdevice");
+              oReq.send();
+            }
+
+            function ResetInternalMemmory()
+            {
+              var oReq = new XMLHttpRequest();
+              //oReq.addEventListener("resetdevice", reqListener);
+              oReq.open("GET", "/resetdevice");
+              oReq.send();
+            }
         </script>
     </head>
     <body>
+        <!-- LAST ERROR DISPLAY!!!! -->
         <form action="/saveconfig" target="hidden-form">
             Weather Display WiFi Client <input type="text" name="wifiName" value="%wifiName%"><br><br>
             Coordinates <input type="text" id="coordinates" name="coordinates" value="%coordinates%"><!--<input id="find-loc" type="button" class="submitOn" value="Set My Coordinates" onclick="getLocation();">--><br>
@@ -79,7 +101,12 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
         %telemetry%
 
-        <br><br><br><br>
-        <a href="/resetdevice">Reset internal memmory</a><br><br>
+        <br><br>
+        <input type="submit" value="Restart device" onclick="RestartDevice()">
+        <br><br>
+
+        <br><br>
+        <input type="submit" value="Reset internal memmory" onclick="ResetInternalMemmory()">
+        <br><br>
   </body>
   </html>)rawliteral";
