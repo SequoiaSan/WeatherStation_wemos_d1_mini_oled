@@ -19,94 +19,274 @@ const char config_html_page[] PROGMEM = R"rawliteral(
     <head>
         <title>Weather Display Configuration Page</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <script>
-            var satellite;
+        <style>
+            .body {
+                background-color: white;
 
-            function submitMessage() 
-            {
-                //alert("All data ");
-                //document.location.reload(false);
-                //setTimeout(function(){ document.location.reload(false); }, 500);   
             }
 
-            function getLocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(setPosition,function(){alert("Geolocation is not supported by this browser.");}, {maximumAge:60000, timeout:5000, enableHighAccuracy:true});
+            .centred-container {
+                width: 400px;
+                background-color: rgb(186, 225, 214);
+                margin: 0px auto;
+                border-radius: 10px;
+            }
+
+            .main-container {
+                padding-top: 25px;
+                padding-bottom: 10px;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .head-text {
+                font-size: 30px;
+                text-align: center;
+                font-weight: bolder;
+            }
+
+            .section {
+                border-radius: 10px;
+
+                margin-top: 10px;
+                margin-bottom: 10px;
+                
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .parametr-section {
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
+            .parametr-name {
+                font-size: medium;
+                text-align: left;
+            }
+
+            .parametr-input {
+                background-color: transparent;
+                border: 0px;
+                height: 25px;
+                width: 335px;
+                color: #000000;
+                outline: none;
+                border-bottom: 1px solid rgb(107, 107, 107);
+            }
+
+            .map {
+                width: 335px;
+                height: 170px;
+                margin: 0px;
+            }
+
+            .dndGrid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-auto-rows: 15px;
+                margin-bottom: 10px;
+            }
+
+            .buttonGrid {
+                margin: 10px;
+                padding: 10px;
+                padding-top: 40px;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-auto-rows: 50px;
+            }
+
+            .button {
+                background-color: #6FC7B2; /* Green */
+                border: none;
+                color: white;
+                display: inline-block;
+                transition-duration: 0.2s;
+                line-height: 18px;
+                justify-content: center;
+            }
+
+            .button:hover {
+                background-color: #3ce2bb;
+            }
+
+            .buttonBig {
+                padding: 15px 32px;
+                font-size: 16px;
+            }
+
+            .buttonSmall {
+                width: 150px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                font-size: 12px;
+            }
+
+            .buttonDanger {
+                background-color: #F392BD;
+            }
+
+            .buttonDanger:hover {
+                background-color: #eb5498;
+            }
+
+            /* iOS style switch */
+            .form-switch {
+                display: inline-block;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .form-switch i {
+                position: relative;
+                display: inline-block;
+                margin-right: .5rem;
+                width: 46px;
+                height: 26px;
+                background-color: #e6e6e6;
+                border-radius: 23px;
+                vertical-align: text-bottom;
+                transition: all 0.3s linear;
+            }
+
+            .form-switch i::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                width: 42px;
+                height: 22px;
+                background-color: #fff;
+                border-radius: 11px;
+                transform: translate3d(2px, 2px, 0) scale3d(1, 1, 1);
+                transition: all 0.25s linear;
+            }
+
+            .form-switch i::after {
+                content: "";
+                position: absolute;
+                left: 0;
+                width: 22px;
+                height: 22px;
+                background-color: #fff;
+                border-radius: 11px;
+                box-shadow: 0 2px 2px rgba(0, 0, 0, 0.24);
+                transform: translate3d(2px, 2px, 0);
+                transition: all 0.2s ease-in-out;
+            }
+
+            .form-switch:active i::after {
+                width: 28px;
+                transform: translate3d(2px, 2px, 0);
+            }
+
+            .form-switch:active input:checked + i::after { transform: translate3d(16px, 2px, 0); }
+
+            .form-switch input { display: none; }
+
+            .form-switch input:checked + i { background-color: #4BD763; }
+
+            .form-switch input:checked + i::before { transform: translate3d(18px, 2px, 0) scale3d(0, 0, 0); }
+
+            .form-switch input:checked + i::after { transform: translate3d(22px, 2px, 0); }
+
+
+        </style>
+
+        <script>
+            function hideSection(calle, elementId) {
+                var x = document.getElementById(elementId);
+                if (calle.checked === true) {
+                    x.style.display = "block";
                 } else {
-                    alert("Geolocation is not supported by this browser.");
+                    x.style.display = "none";
                 }
             }
 
-            function setPosition(position) 
-            {
-                let latitude = position.coords.latitude.toFixed(4);
-                let longitude = position.coords.longitude.toFixed(4);
-                let url = "https://maps.google.com/maps?q=" + latitude + "," + longitude + "&hl=en&z=14&output=embed";
-
-                document.getElementById("lat").value = latitude;
-                document.getElementById("lon").value = longitude;
-                document.getElementById("iframemap").src = url;
-                document.getElementById("maplink").href = url;
-            }
-
-            //function reqListener () 
-            //{
-            //  console.log(this.responseText);
-            //}
-
-            function RestartDevice()
-            {
-              var oReq = new XMLHttpRequest();
-              //oReq.addEventListener("restartdevice", reqListener);
-              oReq.open("GET", "/restartdevice");
-              oReq.send();
-            }
-
-            function ResetInternalMemmory()
-            {
-              var oReq = new XMLHttpRequest();
-              //oReq.addEventListener("resetdevice", reqListener);
-              oReq.open("GET", "/resetdevice");
-              oReq.send();
-            }
+            document.addEventListener('DOMContentLoaded', function() {
+                hideSection(document.getElementById('screensaver_checkbox'), 'screensaver_input');
+                hideSection(document.getElementById('dnd_checkbox'), 'dnd_input');
+                hideSection(document.getElementById('celsius_checkbox'), 'celsius_sign');
+            }, false);
         </script>
+
+    <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="sequoiasan" data-description="Support me on Buy me a coffee!" data-message="" data-color="#ff813f" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+    
     </head>
     <body>
-        <!-- LAST ERROR DISPLAY!!!! -->
-        <form action="/saveconfig" target="hidden-form">
-            Weather Display WiFi Client <input type="text" name="wifiName" value="%wifiName%"><br><br>
-            Coordinates <input type="text" id="coordinates" name="coordinates" value="%coordinates%"><!--<input id="find-loc" type="button" class="submitOn" value="Set My Coordinates" onclick="getLocation();">--><br>
-            <iframe width="300" height="170" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" id="iframemap" src="https://maps.google.com/maps?q=%lat%,%lon%&hl=en&z=14&output=embed"></iframe>
+        <div class="centred-container">
+            <div class="main-container">
+                <form action="/saveconfig" target="hidden-form">
+                    <div class="head-text">Weather Display</div>
+                    <div class="head-text" style="font-size:27px; font-weight: lighter;">Configuration Page</div>
+                    <div class="section" style="background-color: #FDFAD6; margin-top: 20px;">
+                        <div class="parametr-section">
+                            <div class="parametr-name">Weather Display WiFi Client</div>
+                            <input type="text" name="wifiName" class="parametr-input" value="%wifiName%"/>
+                        </div>
+                        <div class="parametr-section">
+                            <div class="parametr-name">Coordinates</div>
+                            <input type="text" name="coordinates" class="parametr-input" value="%coordinates%"/>
+                        </div>
+                        <div class="parametr-section">
+                            <iframe class="map" frameborder="0" scrolling="no" id="iframemap" src="https://maps.google.com/maps?q=%lat%,%lon%&hl=en&z=14&output=embed"></iframe>
+                        </div>
+                        <div class="parametr-section">
+                            <div class="parametr-name">API Key</div>
+                            <input type="text" name="apiKey" class="parametr-input" value="%apiKey%"/>
+                        </div>
+                    </div>
 
-            <br><br>
+                    <div class="section" style="background-color: #FDF2E8;">
+                        <div class="parametr-section">
+                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="screenSaver" onclick="hideSection(this, 'screensaver_input')" id="screensaver_checkbox" %screenSaver%><i></i><a style="position:relative; top:-4px">Screen Saver</a></label>
+                            <div id="screensaver_input">
+                                <div class="parametr-name">Display off time (sec)</div>
+                                <input type="number" name="screenSaverTime" class="parametr-input" value="%screenSaverTime%"/>
+                            </div>
+                        </div>
+                    </div>
 
-            <input type="checkbox" id="screenSaver" name="screenSaver" %screenSaver%><label for="screenSaver">Screen Saver</label><br>
-            Display off time (sec) <input type="number" name="screenSaverTime" value="%screenSaverTime%"><br><br>
+                    <div class="section" style="background-color: #F7E9F2;">
+                        <div class="parametr-section">
+                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="DNDMode" onclick="hideSection(this, 'dnd_input')" id="dnd_checkbox" %DNDMode%><i></i><a style="position:relative; top:-4px">DND Mode</a></label>
+                            <div id="dnd_input">
+                                <div class="dndGrid"> 
+                                    <div class="parametr-name">DND From (hour)</div>
+                                    <div class="parametr-name">To</div>
+                                    <input type="number" name="DNDFrom" class="parametr-input" style="width: 100px;" value="%DNDFrom%"/>
+                                    <input type="number" name="DNDTo" class="parametr-input" style="width: 100px;" value="%DNDTo%"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            <input type="checkbox" id="DNDMode" name="DNDMode" %DNDMode%><label for="DNDMode">DND Mode</label><br>
-            DND from (hour) <input type="number" name="DNDFrom" value="%DNDFrom%"> to (hour) <input type="number" name="DNDTo" value="%DNDTo%"><br><br>
+                    <div class="section" style="background-color: #E1E1F1;">
+                        <div class="parametr-section"></div>
+                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="celsius" onclick="hideSection(this, 'celsius_sign')" id="celsius_checkbox" %celsius%><i></i><a style="position:relative; top:-4px">Celsius</a></label>
+                            <br>
+                            <label class="form-switch" style="padding-bottom: 10px;" id="celsius_sign"><input type="checkbox" name="celsiusSign" %celsiusSign%><i></i><a style="position:relative; top:-4px">Celsius sign display</a></label>
+                        </div>
+                    </div>
 
-            <input type="checkbox" id="celsius" name="celsius" %celsius%><label for="celsius">Celsius</label><br>
-            <input type="checkbox" id="celsiusSign" name="celsiusSign" %celsiusSign%><label for="celsiusSign">Celsius sign display</label><br>
-
-            <br><br>
-
-            API Key <input type="text" name="apiKey" value="%apiKey%"><br><br>
-            <input type="submit" value="Submit" onclick="submitMessage()">
-        </form>
-
-        <br><br><br>
-
-        <a href="/update">Update page</a><br><br>
-
-        %telemetry%
-
-        <br><br>
-        <input type="submit" value="Restart device" onclick="RestartDevice()">
-        <br><br>
-
-        <br><br>
-        <input type="submit" value="Reset internal memmory" onclick="ResetInternalMemmory()">
-        <br><br>
-  </body>
-  </html>)rawliteral";
+                    <input class="button buttonBig" style="margin: auto; display: flex; margin-top: 20px;" type="submit" value="Save Settings">
+                </form>
+                <div class="buttonGrid">
+                    <div>
+                        <a style="text-decoration: none;" href="/restartdevice"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Restart Device</button></a>
+                    </div>
+                    <div>
+                        <a style="text-decoration: none;" href="/update"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Update Page</button></a>
+                    </div>
+                    <div>
+                        <a style="text-decoration: none;" href="/resetdevice"><button class="button buttonSmall buttonDanger" style="margin: auto; display: flex;" onclick="">Reset Internal Memory</button></a>
+                    </div>
+                    <div>
+                        %telemetry%
+                        <!-- <a style="text-decoration: none;" href="/telemetry"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Telemetry</button></a> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>)rawliteral";

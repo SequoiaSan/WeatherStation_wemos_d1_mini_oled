@@ -255,7 +255,7 @@ String processor(const String& var){
 #ifdef TELEMETRY
   else if (var == PARAM_TELEMETRY)
   {
-    return String("<a href='/telemetry'>Telemetry</a><br><br>");
+    return String("<a style=\"text-decoration: none;\" href=\"/telemetry\"><button class=\"button buttonSmall\" style=\"margin: auto; display: flex;\" onclick=\"\">Telemetry</button></a>");
   }
 #endif // TELEMETRY
 
