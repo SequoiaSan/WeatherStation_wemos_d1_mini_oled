@@ -69,7 +69,7 @@ AsyncWebServer webServer(80);
 #endif // WIFI_MANAGER
 
 StaticJsonDocument<22000> jsonResponse;
-StaticJsonDocument<400> deviceConfiguration;
+StaticJsonDocument<500> deviceConfiguration;
 bool configurationUpdated = false;
 
 CWeatherDisplay weatherDisplay;

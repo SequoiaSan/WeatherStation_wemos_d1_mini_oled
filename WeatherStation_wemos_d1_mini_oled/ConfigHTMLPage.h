@@ -437,6 +437,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
         function startTimer(timeLimitArg, showElementId) {
             timeLeft = TimeLimit = timeLimitArg;
 
+            document.getElementById("app").style.display = 'block';
             document.getElementById("main").style.display = 'none';
 
             document.getElementById("app").innerHTML = `
