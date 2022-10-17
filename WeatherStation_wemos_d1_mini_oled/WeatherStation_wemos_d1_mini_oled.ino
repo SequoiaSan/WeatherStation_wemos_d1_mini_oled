@@ -138,7 +138,7 @@ void ApplyConfigurataion()
 {
     // Will apply after restart. Do you wish to restart?
     WiFi.hostname(deviceConfiguration[0][PARAM_WIFINAME].as<String>());
-    weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>());
+    weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>(), deviceConfiguration[0][PARAM_SCREENSAVERTIMEOFF].as<int>());
     CheckSleepTime(sleepTimeCheckTimer);
     weatherDisplay.SetCelsiusSign(deviceConfiguration[0][PARAM_CELSIUSSIGN].as<bool>() && deviceConfiguration[0][PARAM_CELSIUS].as<bool>());
     CheckWeather(weatherCheckTimer); 
@@ -206,6 +206,10 @@ String processor(const String& var){
   else if (var == PARAM_SCREENSAVERTIME)
   {
     return String(static_cast<int>(deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>()/1000/60));
+  }
+  else if (var == PARAM_SCREENSAVERTIMEOFF)
+  {
+    return String(static_cast<int>(deviceConfiguration[0][PARAM_SCREENSAVERTIMEOFF].as<int>()/1000));
   }
   else if (var == PARAM_DNDMODE)
   {
@@ -282,6 +286,7 @@ void setup()
     obj[PARAM_LON] = 0;
     obj[PARAM_SCREENSAVER] = true;
     obj[PARAM_SCREENSAVERTIME] = WEATHER_DISPLAY_OLED_START_REFRESH * 1000 * 60;
+    obj[PARAM_SCREENSAVERTIMEOFF] = WEATHER_DISPLAY_OLED_END_REFRESH * 1000;
     obj[PARAM_DNDMODE] = true;
     obj[PARAM_DNDFROM] = 23;
     obj[PARAM_DNDTO] = 7;
@@ -352,7 +357,7 @@ void setup()
   weatherDisplay.UpdateWiFiConnectedState(STASSID.c_str(), WiFi.localIP().toString());
   #endif // not WIFI_MANAGER
   
-  weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>());
+  weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>(), deviceConfiguration[0][PARAM_SCREENSAVERTIMEOFF].as<int>());
   weatherDisplay.SetCelsiusSign(deviceConfiguration[0][PARAM_CELSIUSSIGN].as<bool>() && deviceConfiguration[0][PARAM_CELSIUS].as<bool>());
 
 // How long we'll display obtained IP adress
@@ -463,6 +468,12 @@ void setup()
         newScreenSaverTime = request->getParam(PARAM_SCREENSAVERTIME)->value().toInt();
       }
 
+      int newScreenSaverTimeOff = deviceConfiguration[0][PARAM_SCREENSAVERTIMEOFF].as<int>();
+      if(request->hasParam(PARAM_SCREENSAVERTIME) && request->getParam(PARAM_SCREENSAVERTIMEOFF)->value().toInt() > 0)
+      {
+        newScreenSaverTimeOff = request->getParam(PARAM_SCREENSAVERTIMEOFF)->value().toInt();
+      }
+
       // Check DND time
       int newDNDTimeFrom = deviceConfiguration[0][PARAM_DNDFROM].as<int>();
       int newDNDTimeTo = deviceConfiguration[0][PARAM_DNDTO].as<int>();
@@ -501,6 +512,7 @@ void setup()
       obj[PARAM_LON] = newLon;
       obj[PARAM_SCREENSAVER] = request->hasParam(PARAM_SCREENSAVER) ? true : false;
       obj[PARAM_SCREENSAVERTIME] = newScreenSaverTime * 1000 * 60;
+      obj[PARAM_SCREENSAVERTIMEOFF] = newScreenSaverTimeOff * 1000;
       obj[PARAM_DNDMODE] = request->hasParam(PARAM_DNDMODE) ? true : false;
       obj[PARAM_DNDFROM] = newDNDTimeFrom;
       obj[PARAM_DNDTO] = newDNDTimeTo;

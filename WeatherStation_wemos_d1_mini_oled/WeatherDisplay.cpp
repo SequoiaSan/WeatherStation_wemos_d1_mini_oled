@@ -80,10 +80,11 @@ void CWeatherDisplay::SetCelsiusSign(bool celsiusSign)
   m_celsiusSign = celsiusSign;
 }
 
-void CWeatherDisplay::EnableOLEDProtection(bool enable, unsigned int updateTime/* = WEATHER_DISPLAY_OLED_START_REFRESH*/)
+void CWeatherDisplay::EnableOLEDProtection(bool enable, unsigned int updateTime/* = WEATHER_DISPLAY_OLED_START_REFRESH*/, unsigned int timeOff/* = WEATHER_DISPLAY_OLED_END_REFRESH*/)
 {
   m_oledProtectionEnabled = enable;
   m_oledStartRefreshTimer.setInterval(updateTime);
+  m_oledEndRefreshTimer.setInterval(timeOff);
   if(enable)
   {
     m_oledStartRefreshTimer.start();
@@ -148,6 +149,13 @@ void CWeatherDisplay::DisplayWiFiConfigurationHelpText(const char* ssidName)
   u8g2.setDrawColor(1);
   u8g2.setFont(u8g2_font_5x7_tr);
   u8g2.drawStr(0, offsetY + WIFI_ICON_H / 2, ssidName);
+  u8g2.sendBuffer();
+}
+
+void SetDisplayRotation(bool rotate)
+{
+  u8g2.clearDisplay();
+  u8g2.setDisplayRotation(rotate ? U8G2_R1 : U8G2_R3);
   u8g2.sendBuffer();
 }
 

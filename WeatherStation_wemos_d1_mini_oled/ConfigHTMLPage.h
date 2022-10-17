@@ -3,6 +3,7 @@ const char* PARAM_LAT = "lat";
 const char* PARAM_LON = "lon";
 const char* PARAM_SCREENSAVER = "screenSaver";
 const char* PARAM_SCREENSAVERTIME = "screenSaverTime";
+const char* PARAM_SCREENSAVERTIMEOFF = "screenSaverTimeOff";
 const char* PARAM_DNDMODE = "DNDMode";
 const char* PARAM_DNDFROM = "DNDFrom";
 const char* PARAM_DNDTO = "DNDTo";
@@ -209,10 +210,10 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
             /* Timer */
             .timer {
+                display: none;
                 position: absolute;
                 width: 300px;
                 height: 300px;
-                z-index: 15;
                 top: 50%%;
                 left: 50%%;
                 margin: -150px 0 0 -150px;
@@ -339,8 +340,10 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                         <div class="parametr-section">
                             <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="screenSaver" onclick="hideSection(this, 'screensaver_input')" id="screensaver_checkbox" %screenSaver%><i></i><a style="position:relative; top:-4px">Screen Saver</a></label>
                             <div id="screensaver_input">
-                                <div class="parametr-name">Display off interval (minutes)</div>
+                                <div class="parametr-name">Screen saver start (minutes)</div>
                                 <input type="number" name="screenSaverTime" class="parametr-input" value="%screenSaverTime%"/>
+                                <div class="parametr-name">Display off interval (seconds)</div>
+                                <input type="number" name="screenSaverTimeOff" class="parametr-input" value="%screenSaverTimeOff%"/>
                             </div>
                         </div>
                     </div>

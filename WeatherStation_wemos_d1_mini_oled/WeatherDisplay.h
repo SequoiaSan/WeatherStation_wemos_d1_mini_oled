@@ -21,10 +21,10 @@
 ///////////////// DEFINES
 #ifdef DEBUG
 #define WEATHER_DISPLAY_OLED_START_REFRESH 30/1000
-#define WEATHER_DISPLAY_OLED_END_REFRESH 1000 * 2
+#define WEATHER_DISPLAY_OLED_END_REFRESH 2
 #else
 #define WEATHER_DISPLAY_OLED_START_REFRESH 20
-#define WEATHER_DISPLAY_OLED_END_REFRESH 1000 * 1
+#define WEATHER_DISPLAY_OLED_END_REFRESH 1
 #endif
 
 #define WEATHER_DISPLAY_W 64
@@ -94,7 +94,7 @@ class CWeatherDisplay
     void SetNoWifiConnectionMark(bool noWifi);
     void SetCelsiusSign(bool celsiusSign);
 
-    void EnableOLEDProtection(bool enable, unsigned int updateTime = WEATHER_DISPLAY_OLED_START_REFRESH);
+    void EnableOLEDProtection(bool enable, unsigned int updateTime = WEATHER_DISPLAY_OLED_START_REFRESH, unsigned int timeOff = WEATHER_DISPLAY_OLED_END_REFRESH);
 
     void UpdateDisplay();
 
@@ -103,6 +103,8 @@ class CWeatherDisplay
     void UpdateWiFiConnectedState(const char* ssidName, const String& ipAdress);
 
     void DisplayWiFiConfigurationHelpText(const char* ssidName);
+
+    void SetDisplayRotation(bool rotate);
     
   private:
     void InternalUpdateWeatherDisplay();
