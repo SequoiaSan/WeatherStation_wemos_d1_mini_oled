@@ -339,21 +339,25 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
                     <div class="section" style="background-color: #FDF2E8;">
                         <div class="parametr-section">
-                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="screenSaver" onclick="hideSection(this, 'screensaver_input')" id="screensaver_checkbox" %screenSaver%><i></i><a style="position:relative; top:-4px">Screen Saver</a></label>
+                            <label class="form-switch"><input type="checkbox" name="screenSaver" onclick="hideSection(this, 'screensaver_input')" id="screensaver_checkbox" %screenSaver%><i></i><a style="position:relative; top:-4px">Screen Saver</a></label>
                             <div id="screensaver_input">
-                                <div class="parametr-name">Screen saver start (minutes)</div>
-                                <input type="number" name="screenSaverTime" class="parametr-input" value="%screenSaverTime%"/>
-                                <div class="parametr-name">Display off interval (seconds)</div>
-                                <input type="number" name="screenSaverTimeOff" class="parametr-input" value="%screenSaverTimeOff%"/>
+                                <div class="parametr-section">
+                                    <div class="parametr-name">Screen saver start (minutes)</div>
+                                    <input type="number" name="screenSaverTime" class="parametr-input" value="%screenSaverTime%"/>
+                                </div>
+                                <div class="parametr-section">
+                                    <div class="parametr-name">Display off interval (seconds)</div>
+                                    <input type="number" name="screenSaverTimeOff" class="parametr-input" value="%screenSaverTimeOff%"/>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="section" style="background-color: #F7E9F2;">
                         <div class="parametr-section">
-                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="DNDMode" onclick="hideSection(this, 'dnd_input')" id="dnd_checkbox" %DNDMode%><i></i><a style="position:relative; top:-4px">DND Mode</a></label>
+                            <label class="form-switch"><input type="checkbox" name="DNDMode" onclick="hideSection(this, 'dnd_input')" id="dnd_checkbox" %DNDMode%><i></i><a style="position:relative; top:-4px">DND Mode</a></label>
                             <div id="dnd_input">
-                                <div class="dndGrid"> 
+                                <div class="parametr-section dndGrid"> 
                                     <div class="parametr-name">DND From (hour)</div>
                                     <div class="parametr-name">To</div>
                                     <input type="number" name="DNDFrom" class="parametr-input" style="width: 100px;" value="%DNDFrom%"/>
@@ -365,11 +369,9 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
                     <div class="section" style="background-color: #E1E1F1;">
                         <div class="parametr-section">
-                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="celsius" onclick="hideSection(this, 'celsius_sign')" id="celsius_checkbox" %celsius%><i></i><a style="position:relative; top:-4px">Celsius</a></label>
-                            <br>
-                            <label class="form-switch" style="padding-bottom: 10px;" id="celsius_sign"><input type="checkbox" name="celsiusSign" %celsiusSign%><i></i><a style="position:relative; top:-4px">Celsius sign display</a></label>
-                            <br>
-                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="rotateDisplay" %rotateDisplay%><i></i><a style="position:relative; top:-4px">Rotate display</a></label>
+                            <label class="form-switch" style="display: block; padding-bottom: 10px;"><input type="checkbox" name="rotateDisplay" %rotateDisplay%><i></i><a style="position:relative; top:-4px">Rotate display</a></label>
+                            <label class="form-switch" style="display: block; padding-bottom: 10px;"><input type="checkbox" name="celsius" onclick="hideSection(this, 'celsius_sign')" id="celsius_checkbox" %celsius%><i></i><a style="position:relative; top:-4px">Celsius</a></label>
+                            <label class="form-switch" style="display: block; padding-bottom: 10px;" id="celsius_sign"><input type="checkbox" name="celsiusSign" %celsiusSign%><i></i><a style="position:relative; top:-4px">Celsius sign display</a></label>
                         </div>
                     </div>
 
