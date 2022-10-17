@@ -26,7 +26,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
             }
 
             .centred-container {
-                width: 400px;
+                width: 350px;
                 background-color: rgb(186, 225, 214);
                 margin: 0px auto;
                 border-radius: 10px;
@@ -56,8 +56,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
             }
 
             .parametr-section {
-                padding-top: 10px;
-                padding-bottom: 10px;
+                padding: 10px;
             }
 
             .parametr-name {
@@ -69,14 +68,14 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                 background-color: transparent;
                 border: 0px;
                 height: 25px;
-                width: 335px;
+                width: 100%%;
                 color: #000000;
                 outline: none;
                 border-bottom: 1px solid rgb(107, 107, 107);
             }
 
             .map {
-                width: 335px;
+                width: 100%%;
                 height: 170px;
                 margin: 0px;
             }
@@ -105,6 +104,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                 transition-duration: 0.2s;
                 line-height: 18px;
                 justify-content: center;
+                cursor: pointer;
             }
 
             .button:hover {
@@ -117,7 +117,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
             }
 
             .buttonSmall {
-                width: 150px;
+                width: 120px;
                 padding-top: 10px;
                 padding-bottom: 10px;
                 font-size: 12px;
@@ -133,19 +133,19 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
             .help-reset {
                 display: none;
+
                 line-height: 40px;
-
                 text-align: center;
-
-                position: absolute;
-                top: 25%;
-                left: 35%;
-
                 font-size: 30;
                 font-weight: bolder;
-                
-                width: 600px;
+
+                position: absolute;
+                width: 400px;
                 height: 300px;
+                z-index: 15;
+                top: 50%%;
+                left: 50%%;
+                margin: -150px 0 0 -2000px;
             }
 
             /* iOS style switch */
@@ -209,12 +209,15 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
             /* Timer */
             .timer {
-                position: fixed;
-                top: 25;
-                left: 40;
-
-                margin: 0px auto;
+                position: absolute;
+                width: 300px;
+                height: 300px;
+                z-index: 15;
+                top: 50%%;
+                left: 50%%;
+                margin: -150px 0 0 -150px;
             }
+
             .base-timer {
                 width: 300px;
                 height: 300px;
@@ -364,7 +367,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                         </div>
                     </div>
 
-                    <input class="button buttonBig" style="margin: auto; display: flex; margin-top: 20px;" type="submit" value="Save Settings">
+                    <input class="button buttonBig" style="margin: auto; display: flex; margin-top: 30px;" type="submit" value="Save Settings">
                 </form>
                 <div class="buttonGrid">
                     <div>
@@ -374,7 +377,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                         <a style="text-decoration: none;" href="/update"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Update Page</button></a>
                     </div>
                     <div>
-                        <button class="button buttonSmall buttonDanger" style="margin: auto; display: flex;" onclick="sendRequest('/resetdevice')">Reset Internal Memory</button>
+                        <button class="button buttonSmall buttonDanger" style="margin: auto; display: flex;" onclick="sendRequest('/resetdevice')">Reset Memory</button>
                     </div>
                     <div>
                         %telemetry%
