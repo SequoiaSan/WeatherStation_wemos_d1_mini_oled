@@ -141,6 +141,7 @@ void ApplyConfigurataion()
     weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>(), deviceConfiguration[0][PARAM_SCREENSAVERTIMEOFF].as<int>());
     CheckSleepTime(sleepTimeCheckTimer);
     weatherDisplay.SetCelsiusSign(deviceConfiguration[0][PARAM_CELSIUSSIGN].as<bool>() && deviceConfiguration[0][PARAM_CELSIUS].as<bool>());
+    weatherDisplay.SetDisplayRotation(deviceConfiguration[0][PARAM_ROTATEDISPLAY].as<bool>());
     CheckWeather(weatherCheckTimer); 
 }
 
@@ -251,6 +252,17 @@ String processor(const String& var){
       {
         return String();
       }
+  }
+  else if (var == PARAM_ROTATEDISPLAY)
+  {
+      if(deviceConfiguration[0][PARAM_ROTATEDISPLAY].as<bool>())
+      {
+        return String(F("checked"));
+      }
+      else
+      {
+        return String();
+      }
   } 
   else if (var == PARAM_APIKEY)
   {
@@ -292,6 +304,7 @@ void setup()
     obj[PARAM_DNDTO] = 7;
     obj[PARAM_CELSIUS] = true;
     obj[PARAM_CELSIUSSIGN] = true;
+    obj[PARAM_ROTATEDISPLAY] = false;
     obj[PARAM_APIKEY] = "XXXXXXXXXXXXXXXXXXXXXXXXXX";
     serializeJson(deviceConfiguration, jsonData);
   
@@ -359,6 +372,8 @@ void setup()
   
   weatherDisplay.EnableOLEDProtection(deviceConfiguration[0][PARAM_SCREENSAVER].as<bool>(), deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>(), deviceConfiguration[0][PARAM_SCREENSAVERTIMEOFF].as<int>());
   weatherDisplay.SetCelsiusSign(deviceConfiguration[0][PARAM_CELSIUSSIGN].as<bool>() && deviceConfiguration[0][PARAM_CELSIUS].as<bool>());
+
+  weatherDisplay.SetDisplayRotation(deviceConfiguration[0][PARAM_ROTATEDISPLAY].as<bool>());
 
 // How long we'll display obtained IP adress
 #ifdef DEBUG
@@ -518,6 +533,7 @@ void setup()
       obj[PARAM_DNDTO] = newDNDTimeTo;
       obj[PARAM_CELSIUS] = request->hasParam(PARAM_CELSIUS) ? true : false;
       obj[PARAM_CELSIUSSIGN] = request->hasParam(PARAM_CELSIUSSIGN) ? true : false;
+      obj[PARAM_ROTATEDISPLAY] = request->hasParam(PARAM_ROTATEDISPLAY) ? true : false;
       obj[PARAM_APIKEY] = request->hasParam(PARAM_APIKEY) ? request->getParam(PARAM_APIKEY)->value() : deviceConfiguration[0][PARAM_APIKEY].as<String>();
       serializeJson(deviceConfiguration, jsonData);
     

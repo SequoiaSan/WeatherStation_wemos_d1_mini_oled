@@ -152,10 +152,10 @@ void CWeatherDisplay::DisplayWiFiConfigurationHelpText(const char* ssidName)
   u8g2.sendBuffer();
 }
 
-void SetDisplayRotation(bool rotate)
+void CWeatherDisplay::SetDisplayRotation(bool rotate)
 {
   u8g2.clearDisplay();
-  u8g2.setDisplayRotation(rotate ? U8G2_R1 : U8G2_R3);
+  u8g2.setDisplayRotation(rotate ? U8G2_R3 : U8G2_R1);
   u8g2.sendBuffer();
 }
 

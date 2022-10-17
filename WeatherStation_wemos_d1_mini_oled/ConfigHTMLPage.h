@@ -9,6 +9,7 @@ const char* PARAM_DNDFROM = "DNDFrom";
 const char* PARAM_DNDTO = "DNDTo";
 const char* PARAM_CELSIUS = "celsius";
 const char* PARAM_CELSIUSSIGN = "celsiusSign";
+const char* PARAM_ROTATEDISPLAY = "rotateDisplay";
 const char* PARAM_APIKEY = "apiKey";
 const char* PARAM_TELEMETRY = "telemetry";
 const char* PARAM_COORDINATES = "coordinates";
@@ -367,6 +368,8 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                             <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="celsius" onclick="hideSection(this, 'celsius_sign')" id="celsius_checkbox" %celsius%><i></i><a style="position:relative; top:-4px">Celsius</a></label>
                             <br>
                             <label class="form-switch" style="padding-bottom: 10px;" id="celsius_sign"><input type="checkbox" name="celsiusSign" %celsiusSign%><i></i><a style="position:relative; top:-4px">Celsius sign display</a></label>
+                            <br>
+                            <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="rotateDisplay" %rotateDisplay%><i></i><a style="position:relative; top:-4px">Rotate display</a></label>
                         </div>
                     </div>
 
