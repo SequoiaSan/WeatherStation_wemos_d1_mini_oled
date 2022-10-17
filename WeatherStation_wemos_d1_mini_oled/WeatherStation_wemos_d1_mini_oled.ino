@@ -205,7 +205,7 @@ String processor(const String& var){
   }
   else if (var == PARAM_SCREENSAVERTIME)
   {
-    return deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<String>();
+    return String(static_cast<int>(deviceConfiguration[0][PARAM_SCREENSAVERTIME].as<int>()/1000/60));
   }
   else if (var == PARAM_DNDMODE)
   {
@@ -281,7 +281,7 @@ void setup()
     obj[PARAM_LAT] = 0;
     obj[PARAM_LON] = 0;
     obj[PARAM_SCREENSAVER] = true;
-    obj[PARAM_SCREENSAVERTIME] = WEATHER_DISPLAY_OLED_START_REFRESH;
+    obj[PARAM_SCREENSAVERTIME] = WEATHER_DISPLAY_OLED_START_REFRESH * 1000 * 60;
     obj[PARAM_DNDMODE] = true;
     obj[PARAM_DNDFROM] = 23;
     obj[PARAM_DNDTO] = 7;
@@ -500,7 +500,7 @@ void setup()
       obj[PARAM_LAT] = newLat;
       obj[PARAM_LON] = newLon;
       obj[PARAM_SCREENSAVER] = request->hasParam(PARAM_SCREENSAVER) ? true : false;
-      obj[PARAM_SCREENSAVERTIME] = newScreenSaverTime;
+      obj[PARAM_SCREENSAVERTIME] = newScreenSaverTime * 1000 * 60;
       obj[PARAM_DNDMODE] = request->hasParam(PARAM_DNDMODE) ? true : false;
       obj[PARAM_DNDFROM] = newDNDTimeFrom;
       obj[PARAM_DNDTO] = newDNDTimeTo;

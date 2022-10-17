@@ -131,6 +131,23 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                 background-color: #eb5498;
             }
 
+            .help-reset {
+                display: none;
+                line-height: 40px;
+
+                text-align: center;
+
+                position: absolute;
+                top: 25%;
+                left: 35%;
+
+                font-size: 30;
+                font-weight: bolder;
+                
+                width: 600px;
+                height: 300px;
+            }
+
             /* iOS style switch */
             .form-switch {
                 display: inline-block;
@@ -153,7 +170,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
             .form-switch i::before {
                 content: "";
                 position: absolute;
-                left: 0;
+                left: 0px;
                 width: 42px;
                 height: 22px;
                 background-color: #fff;
@@ -165,7 +182,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
             .form-switch i::after {
                 content: "";
                 position: absolute;
-                left: 0;
+                left: 0px;
                 width: 22px;
                 height: 22px;
                 background-color: #fff;
@@ -190,10 +207,82 @@ const char config_html_page[] PROGMEM = R"rawliteral(
 
             .form-switch input:checked + i::after { transform: translate3d(22px, 2px, 0); }
 
+            /* Timer */
+            .timer {
+                position: fixed;
+                top: 25;
+                left: 40;
 
+                margin: 0px auto;
+            }
+            .base-timer {
+                width: 300px;
+                height: 300px;
+            }
+
+            .base-timer__svg {
+                transform: scaleX(-1);
+            }
+
+            .base-timer__circle {
+                fill: none;
+                stroke: none;
+            }
+
+            .base-timer__path-elapsed {
+                stroke-width: 7px;
+                stroke: grey;
+            }
+
+            .base-timer__path-remaining {
+                stroke-width: 7px;
+                stroke-linecap: round;
+                transform: rotate(90deg);
+                transform-origin: center;
+                transition: 1s linear all;
+                fill-rule: nonzero;
+                stroke: currentColor;
+            }
+
+            .base-timer__path-remaining.green {
+                color: rgb(65, 184, 131);
+            }
+
+            .base-timer__path-remaining.orange {
+                color: orange;
+            }
+
+            .base-timer__path-remaining.red {
+                color: red;
+            }
+
+            .base-timer__label {
+                position: absolute;
+                width: 300px;
+                height: 300px;
+                top: 0px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 48px;
+            }
         </style>
 
         <script>
+            function sendRequest(request)
+            {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', request, true);
+               
+                if(request === '/resetdevice') {
+                    startTimer(20, 'help-reset');
+                }
+                else {
+                    startTimer(20);
+                }
+                xhr.send(null);
+            }
+
             function hideSection(calle, elementId) {
                 var x = document.getElementById(elementId);
                 if (calle.checked === true) {
@@ -214,7 +303,13 @@ const char config_html_page[] PROGMEM = R"rawliteral(
     
     </head>
     <body>
-        <div class="centred-container">
+        <div id="app" class="timer"></div>
+        <div id="help-reset" class="help-reset">
+            Device internal memory was reset.
+            <br>
+            Please, connect to WPConfig access point to connect Weather Display to your WiFi.
+        </div>
+        <div class="centred-container" id="main">
             <div class="main-container">
                 <form action="/saveconfig" target="hidden-form">
                     <div class="head-text">Weather Display</div>
@@ -241,7 +336,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                         <div class="parametr-section">
                             <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="screenSaver" onclick="hideSection(this, 'screensaver_input')" id="screensaver_checkbox" %screenSaver%><i></i><a style="position:relative; top:-4px">Screen Saver</a></label>
                             <div id="screensaver_input">
-                                <div class="parametr-name">Display off time (sec)</div>
+                                <div class="parametr-name">Display off interval (minutes)</div>
                                 <input type="number" name="screenSaverTime" class="parametr-input" value="%screenSaverTime%"/>
                             </div>
                         </div>
@@ -262,7 +357,7 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                     </div>
 
                     <div class="section" style="background-color: #E1E1F1;">
-                        <div class="parametr-section"></div>
+                        <div class="parametr-section">
                             <label class="form-switch" style="padding-bottom: 10px;"><input type="checkbox" name="celsius" onclick="hideSection(this, 'celsius_sign')" id="celsius_checkbox" %celsius%><i></i><a style="position:relative; top:-4px">Celsius</a></label>
                             <br>
                             <label class="form-switch" style="padding-bottom: 10px;" id="celsius_sign"><input type="checkbox" name="celsiusSign" %celsiusSign%><i></i><a style="position:relative; top:-4px">Celsius sign display</a></label>
@@ -273,20 +368,148 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                 </form>
                 <div class="buttonGrid">
                     <div>
-                        <a style="text-decoration: none;" href="/restartdevice"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Restart Device</button></a>
+                        <button class="button buttonSmall" style="margin: auto; display: flex;" onclick="sendRequest('/restartdevice')">Restart Device</button>
                     </div>
                     <div>
                         <a style="text-decoration: none;" href="/update"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Update Page</button></a>
                     </div>
                     <div>
-                        <a style="text-decoration: none;" href="/resetdevice"><button class="button buttonSmall buttonDanger" style="margin: auto; display: flex;" onclick="">Reset Internal Memory</button></a>
+                        <button class="button buttonSmall buttonDanger" style="margin: auto; display: flex;" onclick="sendRequest('/resetdevice')">Reset Internal Memory</button>
                     </div>
                     <div>
                         %telemetry%
-                        <!-- <a style="text-decoration: none;" href="/telemetry"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Telemetry</button></a> -->
                     </div>
                 </div>
             </div>
         </div>
     </body>
-</html>)rawliteral";
+
+    <script>
+        // Credit: Mateusz Rybczonec
+
+        const FULL_DASH_ARRAY = 283;
+        const WARNING_THRESHOLD = 10;
+        const ALERT_THRESHOLD = 5;
+
+        const COLOR_CODES = {
+        info: {
+            color: "green"
+        },
+        warning: {
+            color: "green",
+            threshold: WARNING_THRESHOLD
+        },
+        alert: {
+            color: "green",
+            threshold: ALERT_THRESHOLD
+        }
+        };
+
+        const TIME_LIMIT = 20;
+        let TimeLimit = TIME_LIMIT;
+        let timePassed = 0;
+        let timeLeft = TimeLimit;
+        let timerInterval = null;
+        let remainingPathColor = COLOR_CODES.info.color;
+
+        function onTimesUp(showElementId) {
+            if(showElementId) {
+                document.getElementById(showElementId).style.display = 'block';
+                document.getElementById("app").style.display = 'none';
+            }
+            else {
+                document.location.reload(true);
+            }
+            //clearInterval(timerInterval);
+        }
+
+        function startTimer(timeLimitArg, showElementId) {
+            timeLeft = TimeLimit = timeLimitArg;
+
+            document.getElementById("main").style.display = 'none';
+
+            document.getElementById("app").innerHTML = `
+                <div class="base-timer">
+                <svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <g class="base-timer__circle">
+                    <circle class="base-timer__path-elapsed" cx="50" cy="50" r="45"></circle>
+                    <path
+                        id="base-timer-path-remaining"
+                        stroke-dasharray="283"
+                        class="base-timer__path-remaining ${remainingPathColor}"
+                        d="
+                        M 50, 50
+                        m -45, 0
+                        a 45,45 0 1,0 90,0
+                        a 45,45 0 1,0 -90,0
+                        "
+                    ></path>
+                    </g>
+                </svg>
+                <span id="base-timer-label" class="base-timer__label">${formatTime(
+                    timeLeft
+                )}</span>
+                </div>
+                `;
+
+            timerInterval = setInterval(() => {
+                timePassed = timePassed += 1;
+                timeLeft = TimeLimit - timePassed;
+                document.getElementById("base-timer-label").innerHTML = formatTime(
+                timeLeft
+                );
+                setCircleDasharray();
+                setRemainingPathColor(timeLeft);
+
+                if (timeLeft === 0) {
+                    onTimesUp(showElementId);
+                }
+            }, 1000);
+        }
+
+        function formatTime(time) {
+            const minutes = Math.floor(time / 60);
+            let seconds = time % 60;
+
+            if (seconds < 10) {
+                seconds = `0${seconds}`;
+            }
+
+            return `${minutes}:${seconds}`;
+        }
+
+        function setRemainingPathColor(timeLeft) {
+            const { alert, warning, info } = COLOR_CODES;
+            if (timeLeft <= alert.threshold) {
+                document
+                .getElementById("base-timer-path-remaining")
+                .classList.remove(warning.color);
+                document
+                .getElementById("base-timer-path-remaining")
+                .classList.add(alert.color);
+            } else if (timeLeft <= warning.threshold) {
+                document
+                .getElementById("base-timer-path-remaining")
+                .classList.remove(info.color);
+                document
+                .getElementById("base-timer-path-remaining")
+                .classList.add(warning.color);
+            }
+        }
+
+        function calculateTimeFraction() {
+            const rawTimeFraction = timeLeft / TimeLimit;
+            return rawTimeFraction - (1 / TimeLimit) * (1 - rawTimeFraction);
+        }
+
+        function setCircleDasharray() {
+            const circleDasharray = `${(
+                calculateTimeFraction() * FULL_DASH_ARRAY
+            ).toFixed(0)} 283`;
+            document
+                .getElementById("base-timer-path-remaining")
+                .setAttribute("stroke-dasharray", circleDasharray);
+        }
+    </script>
+</html>
+)rawliteral";
