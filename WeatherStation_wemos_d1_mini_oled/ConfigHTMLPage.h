@@ -274,17 +274,26 @@ const char config_html_page[] PROGMEM = R"rawliteral(
         </style>
 
         <script>
+            function restartDevice()
+            {
+                if (confirm("Restart Weather Display?") == true) {
+                    startTimer(20);
+                    sendRequest('/restartdevice');
+                }
+            }
+
+            function resetDevice()
+            {
+                if (confirm("Warning!\nThis will reset all your configuration and set Weather Display in Factory state.\nDo you want to continue?") == true) {
+                    startTimer(20, 'help-reset');
+                    sendRequest('/resetdevice');
+                }
+            }
+
             function sendRequest(request)
             {
                 const xhr = new XMLHttpRequest();
                 xhr.open('GET', request, true);
-               
-                if(request === '/resetdevice') {
-                    startTimer(20, 'help-reset');
-                }
-                else {
-                    startTimer(20);
-                }
                 xhr.send(null);
             }
 
@@ -379,13 +388,13 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                 </form>
                 <div class="buttonGrid">
                     <div>
-                        <button class="button buttonSmall" style="margin: auto; display: flex;" onclick="sendRequest('/restartdevice')">Restart Device</button>
+                        <button class="button buttonSmall" style="margin: auto; display: flex;" onclick="restartDevice()">Restart Device</button>
                     </div>
                     <div>
                         <a style="text-decoration: none;" href="/update"><button class="button buttonSmall" style="margin: auto; display: flex;" onclick="">Update Page</button></a>
                     </div>
                     <div>
-                        <button class="button buttonSmall buttonDanger" style="margin: auto; display: flex;" onclick="sendRequest('/resetdevice')">Reset Memory</button>
+                        <button class="button buttonSmall buttonDanger" style="margin: auto; display: flex;" onclick="resetDevice()">Reset Memory</button>
                     </div>
                     <div>
                         %telemetry%
@@ -465,16 +474,17 @@ const char config_html_page[] PROGMEM = R"rawliteral(
                 `;
 
             timerInterval = setInterval(() => {
-                timePassed = timePassed += 1;
-                timeLeft = TimeLimit - timePassed;
-                document.getElementById("base-timer-label").innerHTML = formatTime(
-                timeLeft
-                );
-                setCircleDasharray();
-                setRemainingPathColor(timeLeft);
-
                 if (timeLeft === 0) {
                     onTimesUp(showElementId);
+                }
+                else {
+                    timePassed = timePassed += 1;
+                    timeLeft = TimeLimit - timePassed;
+                    document.getElementById("base-timer-label").innerHTML = formatTime(
+                    timeLeft
+                    );
+                    setCircleDasharray();
+                    setRemainingPathColor(timeLeft);
                 }
             }, 1000);
         }
